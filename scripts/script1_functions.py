@@ -195,11 +195,38 @@ def remove_redundant(genome, list_start_seq):
 
     return unique_list
 
-# def interruption(gene_coordinates, results):
+
+def interruption(gene_coordinates, results, motif_length = 20):
+
+    filehandle = open(gene_coordinates, "r")
+
+    results = []
+
+    for pos_bef_PAM, subsequence in results:
+        new_result = []
+
+        start_motif = pos_bef_PAM - 19
+        end_motif = pos_bef_PAM
+
+        for line in filehandle:
+            line = line.split()
+            genename = line[0]
+            start_gene = line[1]
+            end_gene = line[2]
+
+            if start_motif < 0:
+
+            else:
+                if (start_motif >= start_gene and start_motif <= end_gene) or (end_motif >= start_gene and end_motif <= end_gene):
+                    new_result = [pos_bef_PAM, subsequence, ]
+                else:
+
+                    new_result = []
 
 
 
-def insertion_detector_counter(ins_positions_41, ins_positions_7, unique_results):
+
+def insertion_detector_counter(ins_positions_41, ins_positions_7, unique_inter_results):
     """
     Given the list of insertion positions and the list of unique results it assigns the number of insertions
     InsTh41 and InsTh7 before and after the 17 position and the total
@@ -222,7 +249,7 @@ def insertion_detector_counter(ins_positions_41, ins_positions_7, unique_results
 
     results = []
 
-    for result in unique_results:
+    for result in unique_inter_results:
         new_result = []
         for pos_bef_PAM, subsequence, genename in results:
             bef17_41 = 0
