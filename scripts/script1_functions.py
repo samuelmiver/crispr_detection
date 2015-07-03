@@ -121,6 +121,7 @@ def motif_finder(sequence, motif):
     while i >= 0:
         listindex.append(i)
         i = sequence.find(motif, i + 1)
+
     return listindex
 
 
@@ -179,14 +180,23 @@ def remove_redundant(genome, list_start_seq):
     while m < len(list_start_seq):
         current_seq = list_start_seq[m][1]
 
+        # Direct genome
         counts = motif_finder(genome, current_seq)
 
+        # Circular
         circ_genome = genome[-20:] + genome[0:21]
         circ_counts = motif_finder(circ_genome, current_seq)
 
-        if len(counts) == 1 and len(circ_counts) == 0:
+        # Reversible
+        rev_comp_genome = reverse_complement(genome)
+        rev_comp_counts = motif_finder(rev_comp_genome, current_seq)
+
+
+        if len(counts) == 1 and len(circ_counts) == 0 and len(rev_comp_counts) == 0:
             unique_list.append(list_start_seq[m])
-        elif len(counts) == 0 and len(circ_counts) == 1:
+        elif len(counts) == 0 and len(circ_counts) == 1 and len(rev_comp_counts) == 0:
+            unique_list.append(list_start_seq[m])
+        elif len(counts) == 0 and len(circ_counts) == 0 and len(rev_comp_counts) == 1:
             unique_list.append(list_start_seq[m])
         else:
             pass
@@ -198,32 +208,52 @@ def remove_redundant(genome, list_start_seq):
 
 def interruption(gene_coordinates, results, motif_length = 20):
 
+    """
+    Given the file of gene coordinates and results it generates a list of list having all the positions and the possible
+    intersections
+    """
+
     filehandle = open(gene_coordinates, "r")
 
-    results = []
+    output = []
 
     for pos_bef_PAM, subsequence in results:
         new_result = []
 
         start_motif = pos_bef_PAM - 19
-        end_motif = pos_bef_PAM
+        end_motif = int(pos_bef_PAM)
 
         for line in filehandle:
             line = line.split()
             genename = line[0]
-            start_gene = line[1]
-            end_gene = line[2]
+            start_gene = int(line[1])
+            end_gene = int(line[2])
 
-            if start_motif < 0:
-
+            # Find intersections
+            if (start_motif >= start_gene and start_motif <= end_gene) or (end_motif >= start_gene and end_motif <= end_gene):
+                new_result = [pos_bef_PAM, subsequence, genename]
+                output += [new_result,]
             else:
-                if (start_motif >= start_gene and start_motif <= end_gene) or (end_motif >= start_gene and end_motif <= end_gene):
-                    new_result = [pos_bef_PAM, subsequence, ]
-                else:
+                pass
 
-                    new_result = []
+        # Considering circularity. If the list of genes is ordered, the last coordinates arriving here
+        # are the ones of the last gene.
 
+        if start_motif < 0:
+            new_start_motif = start_motif + 50
+            if (new_start_motif >= start_gene and new_start_motif <= end_gene) or (end_motif >= start_gene and end_motif <= end_gene):
+                new_result = [pos_bef_PAM, subsequence, genename]
+                output += [new_result,]
+            else:
+                pass
 
+        # If we arrive here without any intersection, add the results without genename
+        if new_result == []:
+            genename = "-"
+            new_result = [pos_bef_PAM, subsequence, genename]
+            output += [new_result,]
+
+    return output
 
 
 def insertion_detector_counter(ins_positions_41, ins_positions_7, unique_inter_results):
@@ -285,9 +315,9 @@ def file_generator(list_of_lists, fileoutname):
 
     fo.write("pos_bef_PAM\tsubsequence\t41_bef17\t41_aft\ttotal41\t7_bef17\t7_aft17\ttotal7\ttotal\n")
 
-    for start, sequence in list_of_lists:
+    for start, sequence, genename in list_of_lists:
 
-        fo.write(str(start)+"\t"+sequence+"\n")
+        fo.write(str(start)+"\t"+sequence+'\t'+genename+"\n")
 
     fo.close()
 

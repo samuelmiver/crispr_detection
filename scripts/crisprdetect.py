@@ -18,18 +18,19 @@ def general_pipeline(genome, motif, length_motif, outputfile, neg_strand = None)
     unique_results = func.remove_redundant(genome, raw_results)
 
     # Find sections interrumping genes:
-    gene_results = func.interruption(gene_coordinates, unique_results)
+    gene_results = func.interruption("../ref_data/gene_coordinates.txt", unique_results)
 
     # Generate the output file
-    func.file_generator(unique_results, outputfile)
+    func.file_generator(gene_results, outputfile)
 
 
 if __name__ == "__main__":
 
-    # Obtain seq
+    # Define the genome
     # complete_sequence = func.fasta_processor(filename = "../ref_data/mpn_genome_NC_000912.fasta")
-    positive_strand_sequence = func.fasta_processor(filename = "../ref_data/mpn_genome_NC_000912.fasta")
+    positive_strand_sequence = func.fasta_processor(filename = "../ref_data/prueba.fasta")
     negative_strand_sequence = func.reverse_complement(positive_strand_sequence)
+
 
     # Run the pipelines
     general_pipeline(positive_strand_sequence, "GG", 21, "../results/data1_positive_unique.txt")
