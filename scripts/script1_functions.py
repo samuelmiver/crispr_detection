@@ -358,7 +358,7 @@ def file_generator(list_of_lists, fileoutname):
 
     fo = open(fileoutname, "w")
 
-    fo.write("pos_bef_PAM\tsubsequence\tgenename\t41_bef17\t41_aft\ttotal41\t7_bef17\t7_aft17\ttotal7\ttotal\n")
+    fo.write("pos_next_PAM\tsubsequence\tgenename\t41_bef17\t41_aft17\ttotal41\t7_bef17\t7_aft17\ttotal7\ttotal\n")
 
     for result in list_of_lists:
         result = map(str, result)
@@ -375,7 +375,8 @@ def order_total_file(total_file):
 
     lines = []
     for line in fi:
-        line = line.split()
+        line = line.strip("\n")
+        line = line.split("\t")
         line[0] = int(line[0])
         lines.append(line)
 
