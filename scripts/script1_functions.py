@@ -274,7 +274,7 @@ def interruption(gene_coordinates, results, motif_length = 20, negative_strand =
     return output
 
 
-def insertion_detector_counter(ins_positions_41, ins_positions_7, unique_inter_results):
+def insertion_detector_counter(ins_positions_41, ins_positions_7, unique_inter_results, negative_strand):
     """
     Given the list of insertion positions and the list of unique results it assigns the number of insertions
     InsTh41 and InsTh7 before and after the 17 position and the total
@@ -318,16 +318,27 @@ def insertion_detector_counter(ins_positions_41, ins_positions_7, unique_inter_r
         new_result = []
         bef17_41, aft17_41, bef17_7, aft17_7, total41, total7, total = (0,)*7
 
-        for ins_position in s_41:
-            if ins_position <= pos_bef_PAM + 2 and ins_position >= pos_bef_PAM - 16:
+        # Different data settings depending on the strand we work:
+        if not negative_strand:
+            start_motif = pos_bef_PAM - 19
+            end_motif = int(pos_bef_PAM) + 2
+        else:
+            start_motif = int(pos_bef_PAM) - 2
+            end_motif = pos_bef_PAM + 19
+
+        # Count the number of insertions
+        for position in range(start_motif , start_motif + 17):
+            if position in s_41:
                 bef17_41 += 1
-            if ins_position < pos_bef_PAM - 21 and ins_position < pos_bef_PAM - 16:
+
+            if position in s_7:
+                bef17_7 += 1
+
+        for position in range(end_motif-2 , end_motif + 1):
+            if position in s_41:
                 aft17_41 += 1
 
-        for ins_position in s_7:
-            if ins_position <= pos_bef_PAM + 2 and ins_position >= pos_bef_PAM - 16:
-                bef17_7 += 1
-            if ins_position < pos_bef_PAM - 21 and ins_position < pos_bef_PAM - 16:
+            if position in s_7:
                 aft17_7 += 1
 
         total41 = bef17_41 + aft17_41
@@ -355,3 +366,21 @@ def file_generator(list_of_lists, fileoutname):
 
     fo.close()
 
+def order_total_file(total_file):
+    """
+    Given the total file it orders it by the first column (position in the genome)
+    """
+
+    fi = open(total_file, "r")
+
+    lines = []
+    for line in fi:
+        line = line.split()
+        line[0] = int(line[0])
+        lines.append(line)
+
+    lines.sort()
+
+    file_generator(lines, "../results/total_file_processed.txt")
+
+    fi.close()

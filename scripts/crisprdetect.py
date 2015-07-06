@@ -40,7 +40,7 @@ def general_pipeline(genome, motif, length_motif, outputfile, neg_strand = None)
     file7 = "../ref_data/insTh7_positions.txt"
 
     print("Counting the insertion sites overlapping")
-    final_results = func.insertion_detector_counter(file41, file7, gene_results)
+    final_results = func.insertion_detector_counter(file41, file7, gene_results, negative_strand = neg_strand)
     print(str(len(final_results)) + " = Have you lose results?")
 
     # Generate the output file
