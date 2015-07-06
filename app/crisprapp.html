@@ -1,0 +1,35 @@
+<html>
+<head>
+
+<title>CRISPRApp</title>
+</head><body bgcolor="#00CCFF">
+<center><h1 style="color:#0B0B61"><u>CRISPR</u><small><sub>App</sub></small></h1></center>
+
+<table border=0 width=100% cellpadding=2 cellspacing=4 align="center">
+<tr align="center">
+  <td width="350"><br></td>
+  <td>CRISPR<small><sub>App</sub></small> is a very ultrasupermega-basic web application to return the list of possible 20-mer
+to interrupt a user-definded delimited region of the <i>Mycoplasma pneumoniae</i> genome using the CRISPR/Cas9 system.</td>
+  <td width="350"><br></td>
+</tr>
+</table>
+
+
+<form name="MainForm" action="crisprapp.php" method="POST">
+<table border="0" cellspacing="2" cellpadding="4" align="center">
+    <tbody>
+    
+   <tr>
+            <td><textarea name="start" rows="1" cols="25" placeholder= "Input a start position" type="text"></textarea><br>
+            <td><textarea name="end" rows="1" cols="25" placeholder="Input a end position" type="text"></textarea><br>
+   </tr>
+	
+   <tr><td colspan="2" align="center"><input type="submit" value="Submit" /> <input type="reset" value="Reset" /></tr>
+    
+   </tbody>
+</table>
+</form>
+
+</body>
+</html>
+

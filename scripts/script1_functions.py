@@ -177,6 +177,9 @@ def remove_redundant(genome, list_start_seq):
 
     m = 0
 
+    circ_genome = genome[-20:] + genome[0:21]
+    rev_comp_genome = reverse_complement(genome)
+
     while m < len(list_start_seq):
         current_seq = list_start_seq[m][1]
 
@@ -184,11 +187,9 @@ def remove_redundant(genome, list_start_seq):
         counts = motif_finder(genome, current_seq)
 
         # Circular
-        circ_genome = genome[-20:] + genome[0:21]
         circ_counts = motif_finder(circ_genome, current_seq)
 
         # Reversible
-        rev_comp_genome = reverse_complement(genome)
         rev_comp_counts = motif_finder(rev_comp_genome, current_seq)
 
 
@@ -206,33 +207,49 @@ def remove_redundant(genome, list_start_seq):
     return unique_list
 
 
-def interruption(gene_coordinates, results, motif_length = 20):
+def interruption(gene_coordinates, results, motif_length = 20, negative_strand = None):
 
     """
     Given the file of gene coordinates and results it generates a list of list having all the positions and the possible
     intersections
     """
+    # We start defining a list, having the starts and ends of the genes:
+    genes = []
 
     filehandle = open(gene_coordinates, "r")
+
+    for gene_result in filehandle:
+        new_gene = []
+        gene_result = gene_result.split()
+        genename    = gene_result[0]
+        start_gene  = int(gene_result[1])
+        end_gene    = int (gene_result[2])
+
+        new_gene = [genename, start_gene, end_gene]
+        genes += [new_gene,]
+
+    # We want to add a genename or nothing to each one of the results, in case a oligo overlaps with more than one result
+    # we need to consider the result both; to do this we need to iterate all the list of genes for each result:
 
     output = []
 
     for pos_bef_PAM, subsequence in results:
-        new_result = []
+        new_result = [pos_bef_PAM, subsequence]
 
-        start_motif = pos_bef_PAM - 19
-        end_motif = int(pos_bef_PAM)
+        # Different data settings depending on the strand we work:
+        if not negative_strand:
+            start_motif = pos_bef_PAM - 19
+            end_motif = int(pos_bef_PAM)
+        else:
+            start_motif = int(pos_bef_PAM)
+            end_motif = pos_bef_PAM + 19
 
-        for line in filehandle:
-            line = line.split()
-            genename = line[0]
-            start_gene = int(line[1])
-            end_gene = int(line[2])
+        # Iterate the gene results
+        for genename, start_gene, end_gene in genes:
 
             # Find intersections
             if (start_motif >= start_gene and start_motif <= end_gene) or (end_motif >= start_gene and end_motif <= end_gene):
-                new_result = [pos_bef_PAM, subsequence, genename]
-                output += [new_result,]
+                new_result.append(genename)
             else:
                 pass
 
@@ -240,18 +257,19 @@ def interruption(gene_coordinates, results, motif_length = 20):
         # are the ones of the last gene.
 
         if start_motif < 0:
-            new_start_motif = start_motif + 50
-            if (new_start_motif >= start_gene and new_start_motif <= end_gene) or (end_motif >= start_gene and end_motif <= end_gene):
-                new_result = [pos_bef_PAM, subsequence, genename]
-                output += [new_result,]
+            new_start_motif = start_motif + 816394
+            if (new_start_motif >= 815526 and new_start_motif <= 816338):
+                new_result.append(genename)
             else:
                 pass
 
-        # If we arrive here without any intersection, add the results without genename
-        if new_result == []:
+        # If we arrive here without any intersection (len(result) = 2) , add the results without genename
+        if len(new_result) == 2:
             genename = "-"
-            new_result = [pos_bef_PAM, subsequence, genename]
-            output += [new_result,]
+            new_result.append(genename)
+
+        # Add the new result:
+        output += [new_result,]
 
     return output
 
@@ -262,48 +280,64 @@ def insertion_detector_counter(ins_positions_41, ins_positions_7, unique_inter_r
     InsTh41 and InsTh7 before and after the 17 position and the total
     """
 
+    # Process the list of 41 and 7 insertion elements
     filehandle_41 = open(ins_positions_41, "r")
     filehandle_7 = open(ins_positions_7, "r")
 
-    def generate_list(filehandle):
-        l = []
+    def generate_set(filehandle):
+        a_set = set()
         for line in filehandle:
             line = line.split()
-            l.append(int(line))
-        return l
+            a_set.add(int(line[0]))
+        return a_set
 
-    l_41 = generate_list(filehandle_41)
-    l_7  = generate_list(filehandle_7)
+    s_41 = generate_set(filehandle_41)
+    s_7  = generate_set(filehandle_7)
 
-    # Start the counting process
+    filehandle_41.close()
+    filehandle_7.close()
 
-    results = []
+    # Process the input list in order to transform all the genenames (in case a result having more than one match)
+    # in only one string
+
+    processed_list = []
 
     for result in unique_inter_results:
+        new = []
+        position = result[0]
+        subsequence = result[1]
+        gene = ", ".join(result[2:])
+        new = [position, subsequence, gene]
+
+        processed_list += [new,]
+
+    # Start the counting process
+    results = []
+
+    for pos_bef_PAM, subsequence, genename in processed_list:
         new_result = []
-        for pos_bef_PAM, subsequence, genename in results:
-            bef17_41 = 0
-            aft17_41 = 0
-            bef17_7  = 0
-            aft17_7  = 0
+        bef17_41, aft17_41, bef17_7, aft17_7, total41, total7, total = (0,)*7
 
-            for ins_position in l_41:
-                if ins_position <= pos_bef_PAM + 2 and ins_position >= pos_bef_PAM - 16:
-                    bef17_41 += 1
-                if ins_position < pos_bef_PAM - 21 and ins_position < pos_bef_PAM - 16:
-                    aft17_41 += 1
+        for ins_position in s_41:
+            if ins_position <= pos_bef_PAM + 2 and ins_position >= pos_bef_PAM - 16:
+                bef17_41 += 1
+            if ins_position < pos_bef_PAM - 21 and ins_position < pos_bef_PAM - 16:
+                aft17_41 += 1
 
-            for ins_position in l_7:
-                if ins_position <= pos_bef_PAM + 2 and ins_position >= pos_bef_PAM - 16:
-                    bef17_7 += 1
-                if ins_position < pos_bef_PAM - 21 and ins_position < pos_bef_PAM - 16:
-                    aft17_7 += 1
+        for ins_position in s_7:
+            if ins_position <= pos_bef_PAM + 2 and ins_position >= pos_bef_PAM - 16:
+                bef17_7 += 1
+            if ins_position < pos_bef_PAM - 21 and ins_position < pos_bef_PAM - 16:
+                aft17_7 += 1
 
-            total41 = bef17_41 + aft17_41
-            total7  = bef17_7  + aft17_7
-            total = total41 + total7
+        total41 = bef17_41 + aft17_41
+        total7  = bef17_7  + aft17_7
+        total = total41 + total7
 
-            new_result = [pos_bef_PAM, subsequence, genename, bef17_41, aft17_41, total41, bef17_7, aft17_7, total7, total]
+        new_result = [pos_bef_PAM, subsequence, genename, bef17_41, aft17_41, total41, bef17_7, aft17_7, total7, total]
+        results += [new_result,]
+
+    return results
 
 
 def file_generator(list_of_lists, fileoutname):
@@ -313,11 +347,11 @@ def file_generator(list_of_lists, fileoutname):
 
     fo = open(fileoutname, "w")
 
-    fo.write("pos_bef_PAM\tsubsequence\t41_bef17\t41_aft\ttotal41\t7_bef17\t7_aft17\ttotal7\ttotal\n")
+    fo.write("pos_bef_PAM\tsubsequence\tgenename\t41_bef17\t41_aft\ttotal41\t7_bef17\t7_aft17\ttotal7\ttotal\n")
 
-    for start, sequence, genename in list_of_lists:
-
-        fo.write(str(start)+"\t"+sequence+'\t'+genename+"\n")
+    for result in list_of_lists:
+        result = map(str, result)
+        fo.write("\t".join(result)+"\n")
 
     fo.close()
 
