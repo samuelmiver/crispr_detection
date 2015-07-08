@@ -31,7 +31,7 @@ def general_pipeline(genome, motif, length_motif, outputfile, neg_strand = None)
 
     # Find if they are interrumping genes:
     print("Adding information about the genes they can be interrumping...")
-    gene_results = func.interruption("../ref_data/gene_coordinates.txt", unique_results, negative_strand = neg_strand)
+    gene_results = func.interruption("../ref_data/mpn_genenames_coord.txt", unique_results, negative_strand = neg_strand)
     print(str(len(gene_results)) + " = Have you lose results?")
 
     # Find the number of insertion 41 and 7 in the motif:

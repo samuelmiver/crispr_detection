@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import re
+from Bio import SeqIO
 
 # This script provides several functions for the detection of sensitive
 # crispr motifs.
@@ -47,6 +48,58 @@ def insertion_processor(inputfilename, ins_type, outputfilename):
     fo.close()
 
 
+def genename_associator(genbank_file, genenames_file):
+    """
+    Given a genbank file and a list of genenames, it generates a file with only the MPN nomenclature names.
+    """
+
+    # Generate a list with the genenames
+    fi = open(genenames_file, "r")
+
+    classic_genenames = []
+
+    for line in fi:
+        line = line.split("\t")
+        genename = line[0]
+        if not genename.startswith("MPN"):
+            classic_genenames.append(genename)
+
+    # Generate the dictionary of results:
+    genenames_d = {}
+
+    for record in SeqIO.parse(genbank_file, "genbank"):
+        for f in record.features:
+            if f.type == "CDS" and "gene" in f.qualifiers:
+                gene = f.qualifiers["gene"][0]
+                if gene in classic_genenames:
+                    try:
+                        genenames_d[gene] = f.qualifiers["locus_tag"][0]
+                    except:
+                        print("error parsing the gb file")
+
+    # Generate the new file:
+    fo = open("../ref_data/mpn_genenames_coord.txt", "w")
+    fu = open(genenames_file, "r")
+
+    for line in fu:
+        line = line.split("\t")
+        genename = line[0]
+        start = line[1]
+        end = line[2]
+
+        if genename.startswith("MPN"):
+            fo.write(genename+"\t"+"\t".join(line))
+        else:
+            try:
+                fo.write(genenames_d[genename]+"\t"+genename+"\t"+start+"\t"+end)
+            except:
+                fo.write(genename+"\t"+genename+"\t"+start+"\t"+end)
+
+    fi.close()
+    fo.close()
+    fu.close()
+
+
 def coding_coordinates(inputfilename, outputfilename, negative = None):
     """
     Processes the file with genes and coordinates
@@ -84,7 +137,6 @@ def coding_coordinates(inputfilename, outputfilename, negative = None):
     filehandle.close()
     fo.close()
     print(count)
-
 
 def reverse_complement(seq):
 
@@ -207,7 +259,7 @@ def remove_redundant(genome, list_start_seq):
     return unique_list
 
 
-def interruption(gene_coordinates, results, motif_length = 20, negative_strand = None):
+def interruption(gene_coordinates, results, motif_length = 20, negative_strand = None, index=0):
 
     """
     Given the file of gene coordinates and results it generates a list of list having all the positions and the possible
@@ -221,9 +273,10 @@ def interruption(gene_coordinates, results, motif_length = 20, negative_strand =
     for gene_result in filehandle:
         new_gene = []
         gene_result = gene_result.split()
-        genename    = gene_result[0]
-        start_gene  = int(gene_result[1])
-        end_gene    = int (gene_result[2])
+
+        genename    = gene_result[index]
+        start_gene  = int(gene_result[2])
+        end_gene    = int(gene_result[3])
 
         new_gene = [genename, start_gene, end_gene]
         genes += [new_gene,]
