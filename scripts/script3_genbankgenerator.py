@@ -30,14 +30,15 @@ def genbank_generator(original, negative_strand= None):
         start = position - 19
         end = position
 
+        if start <= 0:
+            start += 816394
+
+        print(start, end)
         for record in SeqIO.parse(original, "gb"):
             record.features.append(SeqFeature(FeatureLocation(start, end), type = "crispr", strand = st))
             SeqIO.write(record, fo, "gb")
-
-    fo.close()
 
 if __name__ == "__main__":
     # We will do each strand separately to include the information correctl
     genbank_generator("../ref_data/NC_000912transposoninsertions.gbk", negative_strand = False)
     genbank_generator("../results/gb/positive_crispr.gbk", negative_strand = True)
-
