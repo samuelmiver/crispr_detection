@@ -485,3 +485,34 @@ def order_total_file(total_file):
     file_generator(lines, "../results/total_file_processed.txt")
 
     fi.close()
+
+def process_total_killer_file():
+
+    fi = open("../results/total_killers.txt", "r")
+    fo = open("../results/total_killers_processed.txt", "w")
+
+    results = []
+    for line in fi:
+        new_result = []
+        line = line.split("\t")
+
+        position = line[0]
+        subsequence = line[1]
+
+        subsequence = subsequence.split("-")
+        sequence = subsequence[0]
+        number = subsequence[1]
+
+        new_result = [int(position), sequence, number]
+
+        results += [new_result,]
+
+    results = sorted(results)
+    fo.write("Position\tsequence\tNumber_in_genome\n")
+
+    for result in results:
+        result = map(str, result)
+        fo.write("\t".join(result)+"\n")
+
+    fo.close()
+    fi.close()
