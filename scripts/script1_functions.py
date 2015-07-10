@@ -221,11 +221,11 @@ def subseq_extractor(sequence, indices, length_motif, negative_strand = None):
 
 def remove_redundant(genome, list_start_seq):
     """
-    For all the 20 mer given returns a list of list having only those that appears only one time in the
+    For all the 20 mer given returns a list of list having those that appears only one time in the
     genome
     """
 
-    unique_list = []
+    redundant_list = []
 
     m = 0
 
@@ -257,6 +257,53 @@ def remove_redundant(genome, list_start_seq):
         m += 1
 
     return unique_list
+
+
+def take_redundant(genome, list_start_seq):
+    """
+    For all the 20 mer given returns a list of list having only those that appears more than one time in the
+    genome
+    """
+
+    unique_list = []
+
+    m = 0
+
+    circ_genome = genome[-24:] + genome[0:26]
+    rev_comp_genome = reverse_complement(genome)
+
+    num_repeats = 0
+
+    while m < len(list_start_seq):
+        Acurrent_seq = list_start_seq[m][1]+"AGG"
+        Ccurrent_seq = list_start_seq[m][1]+"CGG"
+        Gcurrent_seq = list_start_seq[m][1]+"GGG"
+        Tcurrent_seq = list_start_seq[m][1]+"TGG"
+
+        # Direct genome
+        counts = len(motif_finder(genome, Acurrent_seq)) + len(motif_finder(genome, Ccurrent_seq)) + len(motif_finder(genome, Gcurrent_seq)) + len(motif_finder(genome, Tcurrent_seq))
+
+        # Circular
+        circ_counts = len(motif_finder(circ_genome, Acurrent_seq)) + len(motif_finder(circ_genome, Ccurrent_seq)) + len(motif_finder(circ_genome, Gcurrent_seq)) + len(motif_finder(circ_genome, Tcurrent_seq))
+
+        # Reversible
+        rev_counts = len(motif_finder(rev_comp_genome, Acurrent_seq)) + len(motif_finder(rev_comp_genome, Ccurrent_seq)) + len(motif_finder(rev_comp_genome, Gcurrent_seq)) + len(motif_finder(rev_comp_genome, Tcurrent_seq))
+
+
+        counts += circ_counts + rev_counts
+
+        if counts > 1:
+            result = list_start_seq[m]
+            result[1] = result[1]+"-"+str(counts)
+            if result not in unique_list:
+                unique_list.append(result)
+        else:
+            pass
+
+        m += 1
+
+    return unique_list
+
 
 
 def interruption(gene_coordinates, results, motif_length = 20, negative_strand = None, index=0):
