@@ -25,7 +25,7 @@ def general_pipeline(genome, motif, length_motif, outputfile, neg_strand = None)
     print(str(len(raw_results))+" possible oligos found")
 
     # Remove all those sequence that appears more than once in the genome
-    print("Finding all the possible redundants...")
+    print("Finding all the possible redundante...")
     unique_results = func.take_redundant(genome, raw_results)
     print(str(len(unique_results))+" redundant oligos found")
 
@@ -56,6 +56,6 @@ if __name__ == "__main__":
 
     # Run the pipelines
     general_pipeline(positive_strand_sequence, "GG", 21, "../results/positive_oligo_killers.txt")
-    general_pipeline(negative_strand_sequence, "GG", 21, "../results/negative_oligo_killers.txt", neg_strand = True)
+    general_pipeline(negative_strand_sequence, "GG", 21, "../results/positive_oligo_killers.txt", neg_strand = True)
 
 
