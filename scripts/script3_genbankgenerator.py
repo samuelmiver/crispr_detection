@@ -19,6 +19,7 @@ def genbank_generator(original, negative_strand= None):
         st = -1
 
     # Iterate over the results
+    original_records = list(SeqIO.parse(original, "gb"))
 
     for result in results:
         start = 0
@@ -33,8 +34,8 @@ def genbank_generator(original, negative_strand= None):
         if start <= 0:
             start += 816394
 
-        print(start, end)
-        for record in SeqIO.parse(original, "gb"):
+        for record in original_records:
+            print(start, end)
             record.features.append(SeqFeature(FeatureLocation(start, end), type = "crispr", strand = st))
             SeqIO.write(record, fo, "gb")
 
