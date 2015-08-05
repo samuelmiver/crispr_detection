@@ -2,6 +2,8 @@
 
 import re
 from Bio import SeqIO
+import RNA
+from Bio.SeqUtils import MeltingTemp as mt
 
 # This script provides several functions for the detection of sensitive
 # crispr motifs.
@@ -225,7 +227,7 @@ def remove_redundant(genome, list_start_seq):
     genome
     """
 
-    redundant_list = []
+    unique_list = []
 
     m = 0
 
@@ -235,24 +237,45 @@ def remove_redundant(genome, list_start_seq):
     while m < len(list_start_seq):
         current_seq = list_start_seq[m][1]
 
-        # Direct genome
-        counts = motif_finder(genome, current_seq)
+        # Determine if it generates hairpins and its melting temperature:
+        hp = RNA.fold(current_seq)
 
-        # Circular
-        circ_counts = motif_finder(circ_genome, current_seq)
-
-        # Reversible
-        rev_comp_counts = motif_finder(rev_comp_genome, current_seq)
-
-
-        if len(counts) == 1 and len(circ_counts) == 0 and len(rev_comp_counts) == 0:
-            unique_list.append(list_start_seq[m])
-        elif len(counts) == 0 and len(circ_counts) == 1 and len(rev_comp_counts) == 0:
-            unique_list.append(list_start_seq[m])
-        elif len(counts) == 0 and len(circ_counts) == 0 and len(rev_comp_counts) == 1:
-            unique_list.append(list_start_seq[m])
+        if hp[1] == 0.0:
+            marker = True
         else:
-            pass
+            # Annealing temp from the annealing of DNA
+            annealing_temp = mt.Tm_Wallace(current_seq)
+            # Hp melting temperature --> we look for '(' characters to obtain the nt involved
+            indexes = [i for i in range(len(hp[0])) if hp[0].startswith('(', i)]
+            hp_steem_subsequence = ''
+            for index in indexes:
+                hp_steem_subsequence += current_seq[index]
+
+            if mt.Tm_Wallace(hp_steem_subsequence) >= annealing_temp:
+                marker = False
+            else:
+                marker = True
+
+        # Look for the oligo only if it do not form hairpins
+        if marker:
+            # Direct genome
+            counts = motif_finder(genome, current_seq)
+
+            # Circular
+            circ_counts = motif_finder(circ_genome, current_seq)
+
+            # Reversible
+            rev_comp_counts = motif_finder(rev_comp_genome, current_seq)
+
+            # Check if we add it or not to the list:
+            if len(counts) == 1 and len(circ_counts) == 0 and len(rev_comp_counts) == 0:
+                unique_list.append(list_start_seq[m])
+            elif len(counts) == 0 and len(circ_counts) == 1 and len(rev_comp_counts) == 0:
+                unique_list.append(list_start_seq[m])
+            elif len(counts) == 0 and len(circ_counts) == 0 and len(rev_comp_counts) == 1:
+                unique_list.append(list_start_seq[m])
+            else:
+                pass
 
         m += 1
 
@@ -451,14 +474,15 @@ def insertion_detector_counter(ins_positions_41, ins_positions_7, unique_inter_r
     return results
 
 
-def file_generator(list_of_lists, fileoutname):
+def file_generator(list_of_lists, fileoutname, header):
     """
     It generates plain text files containing the list o lists content
     """
 
     fo = open(fileoutname, "w")
 
-    fo.write("pos_next_PAM\tsubsequence\tgenename\t41_bef17\t41_aft17\ttotal41\t7_bef17\t7_aft17\ttotal7\ttotal\n")
+    if header:
+        fo.write("pos_next_PAM\tsubsequence\tgenename\t41_bef17\t41_aft17\ttotal41\t7_bef17\t7_aft17\ttotal7\ttotal\n")
 
     for result in list_of_lists:
         result = map(str, result)
@@ -471,18 +495,18 @@ def order_total_file(total_file):
     Given the total file it orders it by the first column (position in the genome)
     """
 
-    fi = open(total_file, "r")
-
-    lines = []
-    for line in fi:
-        line = line.strip("\n")
-        line = line.split("\t")
-        line[0] = int(line[0])
-        lines.append(line)
+    with open(total_file, "r") as fi:
+        next(fi)
+        lines = []
+        for line in fi:
+            line = line.strip("\n")
+            line = line.split("\t")
+            line[0] = int(line[0])
+            lines.append(line)
 
     lines.sort()
 
-    file_generator(lines, "../results/total_file_processed.txt")
+    file_generator(lines, "../results/total_file_processed.txt", True )
 
     fi.close()
 

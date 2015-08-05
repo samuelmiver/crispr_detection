@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 import script1_functions as func
-
+import sys
+import os
 
 def general_pipeline(genome, motif, length_motif, outputfile, neg_strand = None):
     """
@@ -24,7 +25,8 @@ def general_pipeline(genome, motif, length_motif, outputfile, neg_strand = None)
     raw_results = func.subseq_extractor(genome, indices, length_motif, negative_strand = neg_strand)
     print(str(len(raw_results))+" possible oligos found")
 
-    # Remove all those sequence that appears more than once in the genome
+    # Remove all those sequence that appears more than once in the genome. This functions removes the
+    # oligos that can form hairpins to.
     print("Ensuring they are unique results...")
     unique_results = func.remove_redundant(genome, raw_results)
     print(str(len(unique_results))+" unique oligos found")
@@ -44,7 +46,12 @@ def general_pipeline(genome, motif, length_motif, outputfile, neg_strand = None)
     print(str(len(final_results)) + " = Have you lose results?")
 
     # Generate the output file
-    func.file_generator(final_results, outputfile)
+    if neg_strand:
+        header = False
+    else:
+        header = True
+
+    func.file_generator(final_results, outputfile, header)
 
 
 if __name__ == "__main__":
@@ -58,4 +65,6 @@ if __name__ == "__main__":
     general_pipeline(positive_strand_sequence, "GG", 21, "../results/data1_positive_unique.txt")
     general_pipeline(negative_strand_sequence, "GG", 21, "../results/data1_negative_unique.txt", neg_strand = True)
 
-
+    # Concatenate the resulting files and order them
+    os.system('cat ../results/data1_positive_unique.txt ../results/data1_negative_unique.txt > ../results/total.txt')
+    func.order_total_file("../results/total.txt")

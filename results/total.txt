@@ -1,3 +1,4 @@
+pos_next_PAM	subsequence	genename	41_bef17	41_aft17	total41	7_bef17	7_aft17	total7	total
 26	CCGACGAAATTAATACCATC	-	0	0	0	0	0	0	0
 27	CGACGAAATTAATACCATCA	-	0	0	0	0	0	0	0
 49	GTATTAAGATGCTACCAACG	-	0	0	0	0	0	0	0
