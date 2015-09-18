@@ -2,7 +2,7 @@
 
 import re
 from Bio import SeqIO
-import RNA
+#import RNA
 from Bio.SeqUtils import MeltingTemp as mt
 
 # This script provides several functions for the detection of sensitive
@@ -510,33 +510,43 @@ def order_total_file(total_file):
 
     fi.close()
 
+
+def atoi(text):
+    return int(text) if text.isdigit() else text
+
+def natural_keys(text):
+    '''
+    alist.sort(key=natural_keys) sorts in human order
+    '''
+    return [ atoi(c) for c in re.split('(\d+)', text) ]
+
+
 def process_total_killer_file():
 
     fi = open("../results/total_killers.txt", "r")
     fo = open("../results/total_killers_processed.txt", "w")
 
-    results = []
+    results = {}
     for line in fi:
-        new_result = []
         line = line.split("\t")
 
-        position = line[0]
+        position = str(line[0])
         subsequence = line[1]
+        gene = line[2]
+        extension = position+'('+gene+')'
 
         subsequence = subsequence.split("-")
         sequence = subsequence[0]
-        number = subsequence[1]
 
-        new_result = [int(position), sequence, number]
+        if sequence in results:
+            results[sequence].append(extension)
+        else:
+            results[sequence] = [extension,]
 
-        results += [new_result,]
-
-    results = sorted(results)
-    fo.write("Position\tsequence\tNumber_in_genome\n")
-
-    for result in results:
-        result = map(str, result)
-        fo.write("\t".join(result)+"\n")
+    fo.write("Sequence\tNumber_in_genome\tposition(gene)\n")
+    for k, v in results.iteritems():
+        v.sort(key=natural_keys)
+        fo.write(k+"\t"+str(len(v))+'\t'+', '.join(v)+"\n")
 
     fo.close()
     fi.close()
