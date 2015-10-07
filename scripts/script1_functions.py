@@ -4,6 +4,8 @@ import re
 from Bio import SeqIO
 #import RNA
 from Bio.SeqUtils import MeltingTemp as mt
+from operator import add
+from sets import Set
 
 # This script provides several functions for the detection of sensitive
 # crispr motifs.
@@ -521,6 +523,32 @@ def natural_keys(text):
     return [ atoi(c) for c in re.split('(\d+)', text) ]
 
 
+def patho_genes():
+
+    genes = Set([])
+    with open("../ref_data/ptho_genes", "r") as fi:
+        for line in fi:
+            line = line.strip().split()
+            gene = str(line[0])
+            genes.add(gene)
+
+    return genes
+
+
+def count_patho_intersections(extension):
+
+    extension = ''.join(extension)
+    path_genes = patho_genes()
+
+    x = 0
+
+    for gene in path_genes:
+        y = extension.count(gene)
+        x += y
+
+    return x
+
+
 def process_total_killer_file():
 
     fi = open("../results/total_killers.txt", "r")
@@ -528,25 +556,41 @@ def process_total_killer_file():
 
     results = {}
     for line in fi:
-        line = line.split("\t")
+        line = line.strip().split("\t")
 
         position = str(line[0])
         subsequence = line[1]
         gene = line[2]
         extension = position+'('+gene+')'
 
+        total_ins41 = int(line[5])
+        total_ins17 = int(line[8])
+        total_ins   = int(line[9])
+
+        b = [total_ins41, total_ins17, total_ins]
+
         subsequence = subsequence.split("-")
         sequence = subsequence[0]
 
         if sequence in results:
-            results[sequence].append(extension)
+            a = results[sequence][1]
+            results[sequence][1] = map(add, a, b)
+            results[sequence][0].append(extension)
         else:
-            results[sequence] = [extension,]
+            results[sequence] = [[], b]
+            results[sequence][0] = [extension,]
 
-    fo.write("Sequence\tNumber_in_genome\tposition(gene)\n")
+    fo.write("Sequence\tNumber_in_genome\tposition(gene)\tpatho_genes\tnum_ins41\tnum_ins17\ttot_ins\n")
     for k, v in results.iteritems():
-        v.sort(key=natural_keys)
-        fo.write(k+"\t"+str(len(v))+'\t'+', '.join(v)+"\n")
+        info = v[0]
+        ins = v[1]
+
+        ins = [str(x) for x in ins]
+
+        info.sort(key=natural_keys)
+        x = count_patho_intersections(info)
+
+        fo.write(k+"\t"+str(len(info))+'\t'+', '.join(info)+'\t'+str(x)+'\t'+'\t'.join(ins)+"\n")
 
     fo.close()
     fi.close()
