@@ -34,7 +34,7 @@ def general_pipeline(genome, motif, length_motif, outputfile, neg_strand = None)
     # Find if they are interrumping genes:
     print("Adding information about the genes they can be interrumping...")
     gene_results = func.interruption("../ref_data/mpn_genenames_coord.txt", unique_results, negative_strand = neg_strand)
-    print(str(len(gene_results)) + " = Have you lose results?")
+    print(str(len(gene_results)) + " = Have you lost results?")
 
     # Find the number of insertion 41 and 7 in the motif:
     # Define InsTh files:
@@ -43,7 +43,7 @@ def general_pipeline(genome, motif, length_motif, outputfile, neg_strand = None)
 
     print("Counting the insertion sites overlapping")
     final_results = func.insertion_detector_counter(file41, file7, gene_results, negative_strand = neg_strand)
-    print(str(len(final_results)) + " = Have you lose results?")
+    print(str(len(final_results)) + " = Have you lost results?")
 
     # Generate the output file
     if neg_strand:
